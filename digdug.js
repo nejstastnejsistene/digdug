@@ -112,26 +112,43 @@ var mainTheme = {
   ]
 }
 
-var playMusic = function (music) {
-  var waiting = false;
-  var nextNote = function (which, notes, i) {
-    var note = notes[i][0];
-    var duration = notes[i][1];
-    startNote(which, note);
-    setTimeout(function () {
-      if (i + 1 < notes.length) {
-        nextNote(which, notes, i + 1); 
-      } else if (waiting) {
-        nextNote('lo', music.lo, 0);
-        nextNote('hi', music.hi, 0);
-        waiting = false;
-      } else {
-        waiting = true;
-      }
-    }, 60000 / music.bpm * duration);
+var notesLength = function (notes) {
+  var sum = 0;
+  for (var i = 0; i < notes.length; i++) {
+    sum += notes[i][1];
   }
-  nextNote('lo', music.lo, 0);
-  nextNote('hi', music.hi, 0);
+  return sum;
 }
 
+var tickLength = 1/32;
+var playMusic = function (music) {
+
+  var loSum = notesLength(music.lo);
+  var hiSum = notesLength(music.hi);
+  if (loSum != hiSum) {
+    throw Error("hi and lo lengths don't match");
+  }
+
+  startNote('lo', music.lo[0][0]);
+  startNote('hi', music.hi[0][0]);
+  (function tick (loIndex, hiIndex, loOffset, hiOffset) {
+
+    if (loOffset * tickLength == music.lo[loIndex][1]) {
+      loOffset %= music.lo[loIndex][1] * tickLength;
+      loIndex = (loIndex + 1) % music.lo.length;
+      startNote('lo', music.lo[loIndex][0]);
+    }
+
+    if (hiOffset * tickLength == music.hi[hiIndex][1]) {
+      hiOffset %= music.hi[hiIndex][1] * tickLength;
+      hiIndex = (hiIndex + 1) % music.hi.length;
+      startNote('hi', music.hi[hiIndex][0]);
+    }
+
+    setTimeout(function () {
+      tick(loIndex, hiIndex, loOffset + 1, hiOffset + 1);
+    }, 60000 / music.bpm * tickLength);
+
+  })(0, 0, 0, 0);
+}
 playMusic(mainTheme);
