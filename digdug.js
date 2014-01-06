@@ -61,6 +61,8 @@ Player.prototype = {
     if (this.stopped) {
       this.lo.stop();
       this.hi.stop();
+      if (this.onStop)
+        this.onStop();
       return;
     }
 
@@ -84,9 +86,17 @@ Player.prototype = {
     }
   },
 
-  stop: function() { this.stopped = true; },
+  stop: function(onStop) {
+    this.stopped = true;
+    this.onStop = onStop;
+  },
+
+  switchMusic: function(newMusic) {
+    var p = this;
+    this.stop(function(){ p.start(newMusic); });
+  }
 }
 
 
 p = new Player();
-p.start(mainTheme);
+p.start(music.gameStart);
