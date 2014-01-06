@@ -39,16 +39,21 @@ function Player() {
 
 Player.prototype = {
 
-  start: function(music) {
+  start: function(music, onFinish) {
     if (!this.stopped)
       throw Error("music is already playing");
     if (!music)
       music = this.music;
+    if (!onFinish) {
+      var p = this;
+      onFinish = function(){ p.start(); }
+    }
 
     if (music != this.music) {
       this.music = music;
       this.loData = new ChannelData();
       this.hiData = new ChannelData();
+      this.onFinish = onFinish;
     }
 
     this.stopped = false;
@@ -81,8 +86,12 @@ Player.prototype = {
     var duration = notes[data.index][1];
     if (data.offset * this.tickLength >= duration) {
       data.offset %= duration * this.tickLength;
-      data.index = (data.index + 1) % notes.length;
-      osc.start(notes[data.index][0]);
+      if (++data.index < notes.length) {
+        osc.start(notes[data.index][0]);
+      } else {
+        data.index = 0;
+        this.stop(this.onFinish);
+      }
     }
   },
 
@@ -99,4 +108,6 @@ Player.prototype = {
 
 
 p = new Player();
-p.start(music.gameStart);
+p.start(music.gameStart, function(){
+  p.start(music.mainTheme);
+});
