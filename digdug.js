@@ -100,6 +100,14 @@ Player.prototype = {
     this.onStop = onStop;
   },
 
+  restart: function() {
+    this.stop(function() {
+      var m = this.music;
+      this.music = null;
+      this.start(m, this.onFinish);
+    });
+  },
+
   switchMusic: function(newMusic) {
     var p = this;
     this.stop(function(){ p.start(newMusic); });
