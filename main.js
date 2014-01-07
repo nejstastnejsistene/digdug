@@ -5,7 +5,7 @@ var p;
 window.onload = function() {
   p = new Player();
   p.start(music.gameStart, function(){
-    p.start(music.mainTheme);
+    p.start(music.mainTheme, p.loop);
   });
 
   drawSprite(ctx, 'carrot', 0, 0);

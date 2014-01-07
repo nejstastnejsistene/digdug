@@ -33,50 +33,45 @@ function Player() {
   this.ctx = new webkitAudioContext();
   this.lo = new Oscillator(this.ctx);
   this.hi = new Oscillator(this.ctx);
-  this.stopped = true;
   this.tickLength = 1/32;
 }
 
 Player.prototype = {
 
   start: function(music, onFinish) {
-    if (!this.stopped)
+    if (this.intervalId)
       throw Error("music is already playing");
+
+    // If not argument is given, default to current music
+    // so pausing/resuming is easier.
     if (!music)
       music = this.music;
-    if (!onFinish) {
-      var p = this;
-      onFinish = function(){ p.start(); }
-    }
 
+    // If the music has changed, start from scratch.
     if (music != this.music) {
       this.music = music;
       this.loData = new ChannelData();
       this.hiData = new ChannelData();
-      this.onFinish = onFinish;
     }
+    if (onFinish)
+      this.onFinish = onFinish;
 
-    this.stopped = false;
     this.lo.start(music.lo[this.loData.index][0]);
     this.hi.start(music.hi[this.hiData.index][0]);
-    this.tick(music);
-  },
 
-  tick: function(music) {
-    if (this.stopped) {
-      if (this.onStop)
-        this.onStop();
-      return;
-    }
-
-    this.tickChannel(this.lo, this.loData, music.lo);
-    this.tickChannel(this.hi, this.hiData, music.hi);
-    
     var p = this;
-    setTimeout(function() {
+    this.intervalId = setInterval(function() {
       p.loData.offset++;
       p.hiData.offset++;
-      p.tick(music);
+      var loFinished = ! p.tickChannel(p.lo, p.loData, music.lo);
+      var hiFinished = ! p.tickChannel(p.hi, p.hiData, music.hi);
+
+      // The whole thing stops when either track finishes.
+      if (loFinished || hiFinished) {
+        p.stop();
+        if (p.onFinish)
+          p.onFinish();
+      } 
     }, 60000 / music.bpm * this.tickLength);
   },
 
@@ -88,28 +83,19 @@ Player.prototype = {
         osc.start(notes[data.index][0]);
       } else {
         data.index = 0;
-        this.stop(this.onFinish);
+        return false; // Done playing.
       }
     }
+    return true; // Continue playing.
   },
 
-  stop: function(onStop) {
-    this.stopped = true;
-    this.onStop = onStop;
+  stop: function() {
+    clearInterval(this.intervalId);
     this.lo.stop();
     this.hi.stop();
+    this.intervalId = null;
   },
 
-  restart: function() {
-    this.stop(function() {
-      var m = this.music;
-      this.music = null;
-      this.start(m, this.onFinish);
-    });
-  },
-
-  switchMusic: function(newMusic) {
-    var p = this;
-    this.stop(function(){ p.start(newMusic); });
-  }
+  // Callback for onFinish() for looping. 
+  loop: function() { this.start(this.music, this.loop); }
 }
