@@ -53,8 +53,13 @@ Player.prototype = {
       this.loData = new ChannelData();
       this.hiData = new ChannelData();
     }
+
+    // Default to resetting the player upon completion.
     if (onFinish)
-      this.onFinish = onFinish;
+      this.onFinish = onFinish || this.reset;
+
+    if (!music)
+      return;
 
     this.lo.start(music.lo[this.loData.index][0]);
     this.hi.start(music.hi[this.hiData.index][0]);
@@ -69,8 +74,7 @@ Player.prototype = {
       // The whole thing stops when either track finishes.
       if (loFinished || hiFinished) {
         p.stop();
-        if (p.onFinish)
-          p.onFinish();
+        p.onFinish();
       } 
     }, 60000 / music.bpm * this.tickLength);
   },
@@ -94,6 +98,11 @@ Player.prototype = {
     this.lo.stop();
     this.hi.stop();
     this.intervalId = null;
+  },
+
+  reset: function() {
+    this.stop();
+    this.music = null;
   },
 
   // Callback for onFinish() for looping. 
