@@ -64,8 +64,6 @@ Player.prototype = {
 
   tick: function(music) {
     if (this.stopped) {
-      this.lo.stop();
-      this.hi.stop();
       if (this.onStop)
         this.onStop();
       return;
@@ -98,6 +96,8 @@ Player.prototype = {
   stop: function(onStop) {
     this.stopped = true;
     this.onStop = onStop;
+    this.lo.stop();
+    this.hi.stop();
   },
 
   restart: function() {
@@ -113,9 +113,3 @@ Player.prototype = {
     this.stop(function(){ p.start(newMusic); });
   }
 }
-
-
-p = new Player();
-p.start(music.gameStart, function(){
-  p.start(music.mainTheme);
-});
