@@ -63,6 +63,8 @@ Dirt.prototype = {
     console.log(r, c);
     if (r % 1 != 0 || c % 1 != 0)
       throw Error('isEaten expecting integer arguments');
+    if (r < 0 || r >= height || c < 0 || c >= width)
+      throw Error('out of bounds');
     // Return true if all of the bits in this tile are false;
     for (var i = 4*r; i < 4*r+4; i++)
       for (var j = 4*c; j < 4*c+4; j++)
