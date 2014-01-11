@@ -34,7 +34,40 @@ Dirt.prototype = {
     }
   },
 
-  eat: function() {
+  eat: function(r, c, dir) {
+    // Eating down or to the right will
+    // actually eat in the next tile over.
+    if (dir == 'down') r += 1;
+    if (dir == 'right') c += 1;
 
+    // Check whether this tile is eaten,
+    // for keeping track of score.
+    var rFloor = Math.floor(r);
+    var cFloor = Math.floor(c);
+    var wasEaten = this.isEaten(rFloor, cFloor);
+
+    // Truncate to 1/4.
+    r = Math.floor(r * 4);
+    c = Math.floor(c * 4);
+
+    // Eat the 4 bits of dirt in front of you.
+    var vertical = (dir == 'up' || dir == 'down');
+    for (var i = 0; i < 4; i++)
+      this.dirt[r+!vertical*i][c+vertical*i] = false;
+
+    // Give 10 points for finishing a tile.
+    return 10 * (this.isEaten(rFloor, cFloor) && !wasEaten);
   },
+ 
+  isEaten: function(r, c) {
+    console.log(r, c);
+    if (r % 1 != 0 || c % 1 != 0)
+      throw Error('isEaten expecting integer arguments');
+    // Return true if all of the bits in this tile are false;
+    for (var i = 4*r; i < 4*r+4; i++)
+      for (var j = 4*c; j < 4*c+4; j++)
+        if (this.dirt[i][j])
+          return false;
+    return true;
+  }
 };
